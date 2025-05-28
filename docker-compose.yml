@@ -1,0 +1,35 @@
+version: "3.8"
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: quarry_monitoring
+      TZ: UTC  # Добавлена таймзона
+    ports:
+      - "3306:3306"  # Исправлены порты
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./fordocker.sql:/docker-entrypoint-initdb.d/fordocker.sql
+
+  app:
+    build: .
+    container_name: spring_app
+    ports:
+      - "8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy  # Ожидание готовности БД
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/quarry_monitoring?useSSL=false&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 123456
+    volumes:
+      - uploads:/app/uploads  # Том для загрузок
+
+volumes:
+  mysql_data:
+  uploads:  # Том для сохранения файлов
